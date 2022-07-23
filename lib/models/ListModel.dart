@@ -86,14 +86,16 @@ class ShowList {
   late String List_Item;
   late int Item_Nos;
   late int Item_Status;
+  late int Item_type;
 
-  ShowList(this.id, this.List_Item, this.Item_Nos, this.Item_Status);
+  ShowList(this.id, this.List_Item, this.Item_Nos, this.Item_Status, this.Item_type);
 
   ShowList.fromMap(Map<String , dynamic> map) {
     id = map["id"];
     List_Item = map["List_Item"];
     Item_Nos = map["Item_Nos"];
     Item_Status = map["Item_Status"];
+    Item_type = map["Item_type"];
   }
 
   Map<String, dynamic> toMap() {
@@ -101,7 +103,8 @@ class ShowList {
       Databasehelper.columnID : id,
       Databasehelper.colItem : List_Item,
       Databasehelper.colItemNos : Item_Nos,
-      Databasehelper.colItemStatus : Item_Status
+      Databasehelper.colItemStatus : Item_Status,
+      Databasehelper.colItemType : Item_type
     };
   }
   

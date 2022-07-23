@@ -63,6 +63,7 @@ class Databasehelper {
           "$colItem TEXT NOT NULL,"
           "$colItemNos INTEGER NOT NULL,"
           "$colItemStatus INTEGER NOT NULL,"
+          "$colItemType INTEGER NOT NULL,"
           "FOREIGN KEY($columnID) REFERENCES articles($columnID)"
           ")");
 
@@ -96,7 +97,7 @@ class Databasehelper {
     Database? db = await instance.database;
     // db.query(table, orderBy: "column_1 ASC, column_2 DESC");
     return await db!
-        .rawQuery('SELECT * FROM $tableItemsMain ORDER BY $colItemType ASC');
+        .rawQuery('SELECT * FROM $tableItemsMain ORDER BY $colItemType DESC');
     // return await db!.rawQuery('SELECT * FROM $tableItemsMain ORDER BY $colItemType ASC;');
   }
 
@@ -139,7 +140,6 @@ class Databasehelper {
 
           if (ck.length > 0) {
             batch.delete(tableItems, where: "$columnID=? AND $colItem=?",whereArgs: [row["id"], row["List_Item"]]);
-
           }
         } else {
           var ck = await db.rawQuery(
@@ -200,16 +200,16 @@ class Databasehelper {
     // print(id);
   }
 
-  newInsetMainList(List<ShowList> items) async {
+  newInsetMainList(List<Map<String, dynamic>> items) async {
     Database? db = await instance.database;
     Batch batch = db!.batch();
 
     items.forEach((val) async {
-      var temp = await db!.rawQuery(
-          "SELECT * from $tableItemsMain WHERE $colItem=?", [val.List_Item]);
-      if (temp.length > 0) {
+      var temp = await db.rawQuery(
+          "SELECT * from $tableItemsMain WHERE $colItem=?", [val["List_Item"]]);
+      if (temp.length == 0) {
         Map<String, dynamic> row = {
-          Databasehelper.colItem: val,
+          Databasehelper.colItem: val["List_Item"],
           Databasehelper.colItemType: 1
         };
         batch.insert(tableItemsMain, row);
@@ -231,5 +231,12 @@ class Databasehelper {
     return await db!.rawQuery(
         'SELECT * FROM $tableItems WHERE $columnID=? AND $colItemStatus=?',
         [id, st]);
+  }
+
+  Future<int> deleteMainItem(String itemName) async{
+    Database? db = await instance.database;
+    return await db!.rawDelete('DELETE FROM $tableItemsMain WHERE $colItem= ? AND $colItemType=1', [itemName]);
+
+
   }
 }
