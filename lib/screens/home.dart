@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shopping_list/database/dbhelper.dart';
 import 'package:shopping_list/models/ListModel.dart';
 import 'package:shopping_list/screens/listAdd.dart';
+import 'package:shopping_list/screens/listShow.dart';
 import 'package:shopping_list/ui_elements/Styles.dart';
 import 'package:intl/intl.dart';
 import 'package:shopping_list/ui_elements/components.dart';
@@ -17,9 +18,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // List<ListData> liData = getList1();
   List<ListData> liData = [];
-  // PopupMenuButton listBtn = listMenu();
+  bool emptyCheck = false;
   final liNameController = TextEditingController();
 
   final dbhelper = Databasehelper.instance;
@@ -44,36 +44,58 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   getLoad() {
-    if (liData.isEmpty) {
+    if (liData.isEmpty && emptyCheck == false) {
       _getList();
       return Center(
         child: Text("Data not available"),
       );
-    } else {
+    } else if (liData.isNotEmpty) {
+      var ledText = "";
       return ListView.builder(
         itemCount: liData.length,
         itemBuilder: (BuildContext context, int index) {
+          ledText = "${liData[index].complated}/${liData[index].totalItems}";
           return Card(
             child: ListTile(
               contentPadding: EdgeInsets.all(8.0),
-              onTap: () {},
-              leading: const CircleAvatar(
+              onTap: () {
+                Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => listShow(
+                                listId: liData[index].id,
+                                listName: liData[index].listname)))
+                    .then((value) => _getList());
+              },
+              leading: CircleAvatar(
                 radius: 25,
-                child: Text("3/5",
+                child: Text(ledText,
                     style: TextStyle(
                         fontSize: 18,
                         color: Colors.blue,
                         fontWeight: FontWeight.bold)),
                 backgroundColor: Color(0xFFD5E1F4),
               ),
-              title: Text(liData[index].listname, style: titleText()),
-              // title: Text("Hello", style: titleText()),
-              // subtitle: Text(li[index].subList),
-              subtitle: Text("Sub total"),
+              title: Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(liData[index].listname,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: titleText()),
+              ),
+              subtitle: Text(
+                liData[index].itemsLi,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
               trailing: listMenu(liData[index]),
             ),
           );
         },
+      );
+    } else {
+      return Center(
+        child: Text("Data not available"),
       );
     }
   }
@@ -88,7 +110,6 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: MediaQuery.of(context).viewInsets,
             child: Container(
                 padding: EdgeInsets.fromLTRB(15.0, 25.0, 15.0, 20.0),
-                // height: MediaQuery.of(context).size.height * 0.3,
                 child: Wrap(
                   children: [
                     Column(
@@ -121,9 +142,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         Row(
                           children: [
                             Expanded(
-                                child: FlatButton(
-                                    height: 20.0,
-                                    padding: EdgeInsets.all(25.0),
+                                child: TextButton(
+                                    style: flatButtonStyle,
                                     onPressed: () {
                                       Navigator.pop(context);
                                     },
@@ -132,10 +152,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                       style: BtnTextCancel(),
                                     ))),
                             Expanded(
-                                child: FlatButton(
-                                    height: 20.0,
-                                    padding: EdgeInsets.all(25.0),
+                                child: TextButton(
+                                    style: flatButtonStyle,
                                     onPressed: () {
+                                      Navigator.pop(context);
                                       insertData(liNameController.text);
                                     },
                                     child: Text(
@@ -156,9 +176,38 @@ class _MyHomePageState extends State<MyHomePage> {
     var allrows = await dbhelper.querAll();
     if (allrows.isNotEmpty) {
       liData.clear();
-      allrows.forEach((row) => liData.add(ListData.fromMap(row)));
-      setState(() {});
+      allrows.forEach((_li) {
+        liData.add(new ListData(
+            _li["id"], _li["listname"], _li["lidate"], 0, 0, "All complete"));
+      });
+      // ------  this logic for get nos of total item added and total completed items
+      for (var i = 0; i < liData.length; i++) {
+        var _li = liData[i];
+        var itemsTotal = await dbhelper.getAllItems(_li.id);
+        var itemsComplete =
+            await dbhelper.getItemsWithStatus(_li.id, "completed");
+        var itemsIncomplete =
+            await dbhelper.getItemsWithStatus(_li.id, "incomplete");
+        liData[i].complated = itemsComplete.length;
+        liData[i].totalItems = itemsTotal.length;
+        // this for get items list incomplete
+        itemsIncomplete.asMap().forEach((index, val) {
+          if (index == 0)
+            liData[i].itemsLi = val["List_Item"] + ", ";
+          else if (itemsIncomplete.length == index)
+            liData[i].itemsLi = liData[i].itemsLi + val["List_Item"];
+          else
+            liData[i].itemsLi = liData[i].itemsLi + val["List_Item"] + ", ";
+        });
+        var sbstring = liData[i].itemsLi;
+        if (itemsIncomplete.length > 0)
+          liData[i].itemsLi = sbstring.substring(0, sbstring.length - 3);
+      }
+      emptyCheck = false;
+    } else {
+      emptyCheck = true;
     }
+    setState(() {});
   }
 
   void insertData(String LiName) async {
@@ -169,8 +218,6 @@ class _MyHomePageState extends State<MyHomePage> {
       Databasehelper.columnname: LiName,
       Databasehelper.columnDate:
           DateFormat('yyyy-MM-dd').format(DateTime.now()),
-      Databasehelper.columnitems: 0,
-      Databasehelper.columncomplete: 0
     };
 
     final id = await dbhelper.insert(row);
@@ -180,16 +227,6 @@ class _MyHomePageState extends State<MyHomePage> {
       Navigator.push(context,
           MaterialPageRoute(builder: (context) => ListAddPage(ListId: id)));
     }
-  }
-
-  List<ListData> getList1() {
-    List<ListData> liData = [];
-    liData.add(ListData(1, "List No 1", "01/04/2022", 0, 0));
-    liData.add(ListData(1, "List No 2", "10/04/2022", 0, 0));
-    liData.add(ListData(1, "List No 3", "15/04/2022", 0, 0));
-    liData.add(ListData(1, "List No 4", "20/04/2022", 0, 0));
-
-    return liData;
   }
 
   listMenu(ListData _li) {
@@ -206,17 +243,19 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Text("Delete"),
                       alignment: Alignment(-1.5, 0),
                     ),
-                    onTap: () {
-                        dbhelper.delete(_li.id);
+                    onTap: () async {
+                      var i = await dbhelper.delete(_li.id);
+                      if (i != 0) {
                         Navigator.pop(context);
                         _getList();
                         mesToast(_li.listname);
+                      }
                     }),
                 value: "delete",
               ),
               PopupMenuItem<String>(
                 child: ListTile(
-                  contentPadding: EdgeInsets.all(0),
+                  contentPadding: const EdgeInsets.all(0),
                   leading: Icon(Icons.copy),
                   title: Align(
                     child: Text("Copy"),

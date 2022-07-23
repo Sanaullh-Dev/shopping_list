@@ -5,28 +5,29 @@ class ListData {
   late int id;
   late String listname;
   late String lidate;
-  late int items;
-  late int items_complate;
+  late int totalItems;
+  late int complated;
+  late String itemsLi;
 
-  ListData(this.id, this.listname, this.lidate, this.items, this.items_complate);
-
+  ListData(this.id, this.listname, this.lidate, this.totalItems, this.complated, this.itemsLi);
+  
   ListData.fromMap(Map<String , dynamic> map) {
     id = map["id"];
     listname = map["listname"];
     lidate = map["lidate"];
-    items = map["items"];
-    items_complate = map["items_complate"];
+    totalItems = map["totalItems"];
+    complated = map["complated"];
+    itemsLi = map["itemsLi"];
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      Databasehelper.columnID : id,
-      Databasehelper.columnname : listname,
-      Databasehelper.columnDate : lidate,
-      Databasehelper.columnitems : items,
-      Databasehelper.columncomplete : items_complate,
-    };
-  }
+  // Map<String, dynamic> toMap() {
+  //   return {
+  //     Databasehelper.columnID : id,
+  //     Databasehelper.columnname : listname,
+  //     Databasehelper.columnDate : lidate,
+  //     // Databasehelper.columnitems : items
+  //   };
+  // }
   
 }
 
@@ -35,13 +36,16 @@ class ListItems {
   late int id;
   late String List_Item;
   late int Item_Nos;
-
-  ListItems(this.id, this.List_Item, this.Item_Nos);
+  late int Item_Status;
+  
+    
+  ListItems(this.id, this.List_Item, this.Item_Nos, this.Item_Status);
 
   ListItems.fromMap(Map<String , dynamic> map) {
     id = map["id"];
     List_Item = map["List_Item"];
     Item_Nos = map["Item_Nos"];
+    Item_Status = map["Item_Status"];
   }
 
   Map<String, dynamic> toMap() {
@@ -49,6 +53,7 @@ class ListItems {
       Databasehelper.columnID : id,
       Databasehelper.colItem : List_Item,
       Databasehelper.colItemNos : Item_Nos,
+      Databasehelper.colItemNos : Item_Status,
     };
   }
   
@@ -70,6 +75,33 @@ class MainItemsList {
     return {
       Databasehelper.colItem : List_Item,
       Databasehelper.colItemType : Item_type
+    };
+  }
+  
+}
+
+class ShowList {
+
+  late int id;
+  late String List_Item;
+  late int Item_Nos;
+  late int Item_Status;
+
+  ShowList(this.id, this.List_Item, this.Item_Nos, this.Item_Status);
+
+  ShowList.fromMap(Map<String , dynamic> map) {
+    id = map["id"];
+    List_Item = map["List_Item"];
+    Item_Nos = map["Item_Nos"];
+    Item_Status = map["Item_Status"];
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      Databasehelper.columnID : id,
+      Databasehelper.colItem : List_Item,
+      Databasehelper.colItemNos : Item_Nos,
+      Databasehelper.colItemStatus : Item_Status
     };
   }
   

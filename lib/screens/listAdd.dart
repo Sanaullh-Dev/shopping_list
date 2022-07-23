@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -17,42 +19,103 @@ class ListAddPage extends StatefulWidget {
 
 class _ListAddPageState extends State<ListAddPage> {
   final dbhelper = Databasehelper.instance;
+  List<ShowList> saveLi = []; // this for saving in database
+  List<ShowList> mainLi = []; // this for showing on screen
+  final addItemController = TextEditingController();
 
-  // List<ListItems> listItems = [];
-  List<MainItemsList> mainLi = [];
+  @override
+  void initState() {
+    _getList();
+    super.initState();
+  }
+
+  void _getList() async {
+    // ------- adding all saved list items
+    var savedList = await dbhelper.getAllItems(widget.ListId);
+    if (savedList.isNotEmpty) {
+      savedList.forEach((val) {
+        saveLi.add(ShowList.fromMap(val));
+      });
+    }
+    await getMainList();
+
+    setState(() {
+      addSaveToMain();
+    });
+  }
+
+  getMainList() async {
+    // ------- adding all Main list items
+    var mainList = await dbhelper.getMainItems();
+    if (mainList.isNotEmpty) {
+      mainList.forEach((val) {
+        mainLi.add(ShowList(widget.ListId, val["List_Item"], 0, 0));
+      });
+    }
+  }
+
+  addSaveToMain() {
+    for (var i = 0; i < mainLi.length; i++) {
+      for (var s = 0; s < saveLi.length; s++) {
+        if (mainLi[i].List_Item == saveLi[s].List_Item) {
+          mainLi[i].Item_Nos = saveLi[s].Item_Nos;
+        } else if (mainLi[i].Item_Nos > 0) {
+          saveLi.add(mainLi[i]);
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
+    return WillPopScope(
+      onWillPop: () async {
+        await _insertItems();
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          leading: GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: Icon(Icons.arrow_back, color: Colors.black),
+          ),
+          title: TextField(
+            autofocus: true,
+            controller: addItemController,
+            onChanged: (context) {
+              var _temp = mainLi;
+              mainLi.clear();
+
+              mainLi.add(ShowList(widget.ListId, addItemController.text, 0, 0));
+
+              _temp.forEach((val) {
+                if (val.List_Item.toLowerCase()
+                    .contains(addItemController.text)) {
+                  mainLi.add(val);
+                }
+              });
+              setState(() {});
+            },
+            decoration:
+                InputDecoration(hintText: "Add Item", border: InputBorder.none),
+          ),
+        ),
+        body: Listview(),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            _insertItems().then((value) => {Navigator.pop(context)});
           },
-          child: Icon(Icons.arrow_back, color: Colors.black),
+          child: Icon(Icons.done_rounded),
         ),
-        title: TextField(
-          autofocus: true,
-          decoration:
-              InputDecoration(hintText: "Add Item", border: InputBorder.none),
-        ),
-      ),
-      body: Listview(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _insertItems().then((value) => {
-            Navigator.pop(context)
-          });
-        },
-        child: Icon(Icons.done_rounded),
       ),
     );
   }
 
   Listview() {
     if (mainLi.length == 0) {
-      _getList();
       return Center(child: Text("Loading..."));
     }
     if (mainLi.isNotEmpty) {
@@ -63,17 +126,19 @@ class _ListAddPageState extends State<ListAddPage> {
             padding: EdgeInsets.symmetric(vertical: 8.0),
             margin: EdgeInsets.symmetric(horizontal: 15.0),
             decoration: BoxDecoration(
-                color: mainLi[index].Item_type != 0
+                color: mainLi[index].Item_Nos != 0
                     ? Colors.blue.shade50
                     : Colors.white,
                 border: Border(bottom: BorderSide(color: Colors.black12))),
             child: ListTile(
                 onTap: () {
-                  // _insertItems(li[index].List_Item);
-                  // _updateList(index);
-                  mainLi[index].Item_type = mainLi[index].Item_type + 1;
-                  setState(() {});
-
+                  // addItems(mainLi[index]);
+                  setState(() {
+                    mainLi[index].Item_Nos = mainLi[index].Item_Nos + 1;
+                    setState(() {
+                      addSaveToMain();
+                    });
+                  });
                   Fluttertoast.showToast(
                       msg: "List Added",
                       toastLength: Toast.LENGTH_SHORT,
@@ -84,9 +149,9 @@ class _ListAddPageState extends State<ListAddPage> {
                       fontSize: 16.0);
                 },
                 leading: Icon(
-                  mainLi[index].Item_type > 0 ? Icons.done : Icons.add,
+                  mainLi[index].Item_Nos > 0 ? Icons.done : Icons.add,
                   size: 25,
-                  color: mainLi[index].Item_type != 0
+                  color: mainLi[index].Item_Nos != 0
                       ? Colors.blue
                       : Colors.blueAccent,
                 ),
@@ -94,30 +159,32 @@ class _ListAddPageState extends State<ListAddPage> {
                   mainLi[index].List_Item,
                   style: TextStyle(
                       fontSize: 20.0,
-                      fontWeight: mainLi[index].Item_type != 0
+                      fontWeight: mainLi[index].Item_Nos != 0
                           ? FontWeight.bold
                           : FontWeight.normal),
                 ),
-                trailing: mainLi[index].Item_type == 0
+                trailing: mainLi[index].Item_Nos == 0
                     ? SizedBox()
                     : GestureDetector(
                         onTap: () {
-                          mainLi[index].Item_type = mainLi[index].Item_type - 1;
-                          setState(() {});
+                          saveLi[index].Item_Nos = saveLi[index].Item_Nos - 1;
+                          setState(() {
+                            addSaveToMain();
+                          });
                         },
-                        child: mainLi[index].Item_type > 1
+                        child: mainLi[index].Item_Nos > 1
                             ? Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    mainLi[index].Item_type.toString(),
+                                    mainLi[index].Item_Nos.toString(),
                                     style: trailingText(),
                                   ),
                                   SizedBox(width: 15),
                                   GestureDetector(
                                     onTap: () {
-                                      mainLi[index].Item_type =
-                                          mainLi[index].Item_type - 1;
+                                      mainLi[index].Item_Nos =
+                                          mainLi[index].Item_Nos - 1;
                                       setState(() {});
                                     },
                                     child: Icon(
@@ -138,65 +205,25 @@ class _ListAddPageState extends State<ListAddPage> {
     }
   }
 
-  Widget getTrailing(int index) {
-    if (mainLi[index].Item_type == 0) {
-      return SizedBox();
-    } else {
-      return GestureDetector(
-        onTap: () {
-          setState(() {
-            mainLi[index].Item_type = 0;
-          });
-        },
-        // child:
-        // Wrap(
-        //       spacing: 12,
-        //         children: [
-        //           Text("$mainLi[index].Item_type"),
-        //           SizedBox(width: 10.0),
-        //           Icon(
-        //             Icons.remove_circle_outline,
-        //             color: Colors.red.shade400,
-        //           )
-        //         ],
-        //       )
-      );
-    }
-  }
-
-  Future<int> _insertItems() async {
+  Future<int?> _insertItems() async {
     List<Map<String, dynamic>> li = [];
     try {
       mainLi.forEach((val) async {
-        if (val.Item_type > 0) {
-          li.add({
-            Databasehelper.columnID: widget.ListId,
-            Databasehelper.colItem: val.List_Item,
-            Databasehelper.colItemNos: val.Item_type
-          });
-          // _result = await dbhelper.insertItems(row);
-        }
+        li.add({
+          Databasehelper.columnID: widget.ListId,
+          Databasehelper.colItem: val.List_Item,
+          Databasehelper.colItemNos: val.Item_Nos,
+          Databasehelper.colItemStatus: val.Item_Status
+        });
       });
-        final id = await dbhelper.insertItems(li);
-        return id;
-     
+
+      await dbhelper.insertItems(li);
+      await dbhelper.newInsetMainList(saveLi);
+
+      return 1;
     } catch (e) {
       errMessage(e.toString());
       return 0;
-    }
-  }
-
-  void _updateList(int index) {
-    // setState(() {
-    // });
-  }
-
-  void _getList() async {
-    var allrows = await dbhelper.getMainList();
-    if (allrows.isNotEmpty) {
-      mainLi.clear();
-      allrows.forEach((row) => mainLi.add(MainItemsList.fromMap(row)));
-      setState(() {});
     }
   }
 }

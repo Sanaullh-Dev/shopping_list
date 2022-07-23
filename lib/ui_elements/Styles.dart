@@ -8,7 +8,13 @@ TextStyle LeadingText() {
 
 TextStyle titleText() {
   // ignore: prefer_const_constructors
-  return TextStyle(color: Colors.black, fontWeight: FontWeight.bold);
+  return TextStyle(
+    fontSize: 19.0, color: Colors.black, fontWeight: FontWeight.bold);
+}
+
+TextStyle subTitleText() {
+  // ignore: prefer_const_constructors
+  return TextStyle(fontSize: 17.0, color: Colors.black, fontWeight: FontWeight.bold);
 }
 
 TextStyle TextFiledLabel() {
@@ -43,3 +49,11 @@ TextStyle trailingText() {
       fontSize: 20.0,
       );
 }
+
+final ButtonStyle flatButtonStyle = TextButton.styleFrom(
+  minimumSize: Size(88, 36),
+  padding: EdgeInsets.symmetric(horizontal: 16.0),
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(2.0)),
+  ),
+);

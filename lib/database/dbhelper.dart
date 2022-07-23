@@ -10,15 +10,15 @@ class Databasehelper {
   static final _databaseversion = 1;
 
   static final table = 'list_tb';
+
   static final columnID = 'id';
   static final columnname = 'listname';
   static final columnDate = 'lidate';
-  static final columnitems = 'items';
-  static final columncomplete = 'items_complate';
 
-  static final tableItems = 'item_tb';
+  static final tableItems = 'items_tb';
   static final colItem = 'List_Item';
   static final colItemNos = 'Item_Nos';
+  static final colItemStatus = 'Item_Status';
 
   static final tableItemsMain = 'item_main';
   static final colItemType = 'Item_type';
@@ -43,7 +43,6 @@ class Databasehelper {
         version: _databaseversion, onCreate: _onCreate);
   }
 
-  
   Future _onCreate(Database db, int version) async {
     try {
       Batch batch = db.batch();
@@ -55,9 +54,7 @@ class Databasehelper {
       batch.execute("CREATE TABLE $table ("
           "$columnID INTEGER PRIMARY KEY AUTOINCREMENT,"
           "$columnname TEXT NOT NULL,"
-          "$columnDate DATETIME NOT NULL,"
-          "$columnitems INTEGER NOT NULL,"
-          "$columncomplete INTEGER NOT NULL"
+          "$columnDate DATETIME NOT NULL"
           ")");
 
       // await db.execute("DROP TABLE IF EXISTS $tableItems ;");
@@ -65,6 +62,7 @@ class Databasehelper {
           "$columnID INTEGER NOT NULL,"
           "$colItem TEXT NOT NULL,"
           "$colItemNos INTEGER NOT NULL,"
+          "$colItemStatus INTEGER NOT NULL,"
           "FOREIGN KEY($columnID) REFERENCES articles($columnID)"
           ")");
 
@@ -74,7 +72,20 @@ class Databasehelper {
           ")");
 
       List<dynamic> result = await batch.commit();
-      await insertMainList();
+      final _mainli = [
+        "Milk",
+        "Bread",
+        "Eggs",
+        "Butter",
+        "Cheese",
+        "Toilet Paper",
+        "Chicken",
+        "Patatoes",
+        "Coffee",
+        "Toothpaste",
+        "Rice"
+      ];
+      await insertMainList(_mainli, 0);
     } catch (e) {}
   }
 
@@ -84,8 +95,9 @@ class Databasehelper {
   Future<List<Map<String, dynamic>>> getMainItems() async {
     Database? db = await instance.database;
     // db.query(table, orderBy: "column_1 ASC, column_2 DESC");
-    return await db!.rawQuery('SELECT * FROM $tableItemsMain;');
-    // .rawQuery('SELECT * FROM $tableItemsMain ORDER BY $colItemType ASC;');
+    return await db!
+        .rawQuery('SELECT * FROM $tableItemsMain ORDER BY $colItemType ASC');
+    // return await db!.rawQuery('SELECT * FROM $tableItemsMain ORDER BY $colItemType ASC;');
   }
 
   // Function for insert List
@@ -95,10 +107,15 @@ class Databasehelper {
   }
 
   // Funcation for delete
-   Future<int> delete(int id) async {
+  Future<int> delete(int id) async {
     Database? db = await instance.database;
-    return await db!.rawDelete("DELETE from $table WHERE $columnID = ?", [id]);
-    
+    var result =
+        await db!.rawDelete("DELETE from $table WHERE $columnID = ?", [id]);
+    if (result != 0) {
+      return await db
+          .rawDelete("DELETE from $tableItems WHERE $columnID = ?", [id]);
+    }
+    return 0;
   }
 
   // Future<List<Map<String, dynamic>>> querAll() async {
@@ -107,53 +124,112 @@ class Databasehelper {
     return await db!.query(table);
   }
 
-
   //----------------- Lists Items Function ------------
-  Future<int> insertItems(List<Map<String, dynamic>> rows) async {
+  insertItems(List<Map<String, dynamic>> rows) async {
     try {
-    
-    Database? db = await instance.database;
-    Batch batch = db!.batch();
-    rows.forEach((row) {
-      batch.insert(tableItems, row);  
-    });
-    
-    List<dynamic> result = await batch.commit();
-    return result.isEmpty ? 0 : 1;
+      var result;
+      Database? db = await instance.database;
+      Batch batch = db!.batch();
+      rows.forEach((row) async {
+        /// here check if item is 0 but items is already save than delete this items
+        if (row["Item_Nos"] == 0) {
+          var ck = await db.rawQuery(
+              "SELECT $columnID FROM $tableItems WHERE $columnID=? AND $colItem =?",
+              [row["id"], row["List_Item"]]);
 
+          if (ck.length > 0) {
+            batch.delete(tableItems, where: "$columnID=? AND $colItem=?",whereArgs: [row["id"], row["List_Item"]]);
+
+          }
+        } else {
+          var ck = await db.rawQuery(
+              "SELECT $columnID FROM $tableItems WHERE $columnID=? AND $colItem =?",
+              [row["id"], row["List_Item"]]);
+
+          if (ck.length > 0) {
+            batch.update(tableItems, row,
+                where: '$columnID= ? and $colItem = ?',
+                whereArgs: [row["id"], row["List_Item"]]);
+          } else {
+            batch.insert(tableItems, row);
+          }
+        }
+      });
+      result = await batch.commit();
     } catch (e) {
       errMessage(e.toString());
       return 0;
     }
   }
-  
+
+  Future<int> updateItems(List<Map<String, dynamic>> rows) async {
+    try {
+      Database? db = await instance.database;
+      Batch batch = db!.batch();
+      rows.forEach((row) {
+        batch.update(tableItems, row,
+            where: '$columnID= ? and $colItem = ?',
+            whereArgs: [row["id"], row["List_Item"]]);
+      });
+
+      List<dynamic> result = await batch.commit();
+      return result.isEmpty ? 0 : 1;
+    } catch (e) {
+      errMessage(e.toString());
+      return 0;
+    }
+  }
 
   Future<List<Map<String, dynamic>>> getAllItems(int id) async {
     Database? db = await instance.database;
     return await db!
         .rawQuery('SELECT * FROM $tableItems WHERE $columnID=?', [id]);
+    // .rawQuery('SELECT * FROM $tableItems WHERE $columnID=? ORDER BY $colItem ASC;', [id]);
   }
 
-  insertMainList() async {     
-    var items = ["Milk","Bread","Eggs", "Butter", "Cheese", "Toilet Paper",
-      "Chicken", "Patatoes","Coffee","Toothpaste","Rice"];
-
-     items.forEach((val) async {
+  insertMainList(List<String> items, int itemType) async {
+    items.forEach((val) async {
       Map<String, dynamic> row = {
-      Databasehelper.colItem: val,
-      Databasehelper.colItemType: 0
-    };
+        Databasehelper.colItem: val,
+        Databasehelper.colItemType: itemType
+      };
 
       Database? db = await instance.database;
       await db!.insert(tableItemsMain, row);
     });
-    // print(id);   
+    // print(id);
+  }
+
+  newInsetMainList(List<ShowList> items) async {
+    Database? db = await instance.database;
+    Batch batch = db!.batch();
+
+    items.forEach((val) async {
+      var temp = await db!.rawQuery(
+          "SELECT * from $tableItemsMain WHERE $colItem=?", [val.List_Item]);
+      if (temp.length > 0) {
+        Map<String, dynamic> row = {
+          Databasehelper.colItem: val,
+          Databasehelper.colItemType: 1
+        };
+        batch.insert(tableItemsMain, row);
+      }
+      ;
+    });
+    var result = await batch.commit();
   }
 
   Future<List<Map<String, dynamic>>> getMainList() async {
     Database? db = await instance.database;
-    return await db!
-        .rawQuery('SELECT * FROM $tableItemsMain;');
+    return await db!.rawQuery('SELECT * FROM $tableItemsMain;');
   }
 
+  Future<List<Map<String, dynamic>>> getItemsWithStatus(
+      int id, String status) async {
+    Database? db = await instance.database;
+    var st = status == "completed" ? 1 : 0;
+    return await db!.rawQuery(
+        'SELECT * FROM $tableItems WHERE $columnID=? AND $colItemStatus=?',
+        [id, st]);
+  }
 }
