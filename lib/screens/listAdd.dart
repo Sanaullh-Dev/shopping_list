@@ -66,16 +66,19 @@ class _ListAddPageState extends State<ListAddPage> {
       for (var s = 0; s < saveLi.length; s++) {
         if (mainLi[i].List_Item == saveLi[s].List_Item) {
           mainLi[i].Item_Nos = saveLi[s].Item_Nos;
+          mainLi[i].Item_Status = saveLi[s].Item_Status;
           match = true;
           break;
         }
       }
       if (match == false) {
+        // if user enter new item than item add in save List
         saveLi.add(mainLi[i]);
       }
     }
     editLi = List.from(mainLi);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +163,7 @@ class _ListAddPageState extends State<ListAddPage> {
                     }
                     editLi = List.from(mainLi);
                     setState(() {
-                      addSaveToMain();
+                      // addSaveToMain();
                     });
                   });
                   Fluttertoast.showToast(
@@ -189,27 +192,34 @@ class _ListAddPageState extends State<ListAddPage> {
                 ),
                 trailing: editLi[index].Item_Nos == 0
                     ? editLi[index].Item_type != 0 &&
-                            editLi[index].Item_Nos != 0
+                            addItemController.text != editLi[index].List_Item
+                        // delete main items
                         ? GestureDetector(
                             onTap: () {
                               dbhelper
                                   .deleteMainItem(editLi[index].List_Item)
-                                  .then((value) => setState(() async {
-                                        mainLi.clear();
-                                        await getMainList();
-                                        addSaveToMain();
-                                      }));
+                                  .then((res) async => {
+                                        if (res > 0)
+                                          {
+                                            mainLi.clear(),
+                                            await getMainList(),
+                                            addSaveToMain(),
+                                            setState(() {})
+                                          }
+                                      });
                             },
                             child: Icon(
                               Icons.delete_outline,
                               color: Colors.red.shade400,
                             ),
                           )
-                        : SizedBox()
+                        : SizedBox() // for blank show
                     : GestureDetector(
                         onTap: () {
                           mainLi[index].Item_Nos = mainLi[index].Item_Nos - 1;
-                          setState(() {});
+                          setState(() {
+                            editLi = List.from(mainLi);
+                          });
                         },
                         child: editLi[index].Item_Nos > 1
                             ? Row(
@@ -222,8 +232,6 @@ class _ListAddPageState extends State<ListAddPage> {
                                   SizedBox(width: 15),
                                   GestureDetector(
                                     onTap: () {
-                                      editLi[index].Item_Nos =
-                                          editLi[index].Item_Nos - 1;
                                       mainLi[index].Item_Nos =
                                           mainLi[index].Item_Nos - 1;
                                       setState(() {});

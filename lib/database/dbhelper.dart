@@ -235,8 +235,6 @@ class Databasehelper {
 
   Future<int> deleteMainItem(String itemName) async{
     Database? db = await instance.database;
-    return await db!.rawDelete('DELETE FROM $tableItemsMain WHERE $colItem= ? AND $colItemType=1', [itemName]);
-
-
+    return await db!.rawDelete('DELETE FROM $tableItemsMain WHERE $colItem = ? ', [itemName]);
   }
 }

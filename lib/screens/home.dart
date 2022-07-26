@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:shopping_list/database/dbhelper.dart';
 import 'package:shopping_list/models/ListModel.dart';
 import 'package:shopping_list/screens/listAdd.dart';
@@ -30,7 +30,9 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         leading: Icon(Icons.menu, color: Colors.black),
         title: Text(widget.title, style: titleText()),
-        backgroundColor: Colors.blue.shade50,
+        backgroundColor: Colors.white,
+        elevation: 0,
+
       ),
       body: Container(child: getLoad()),
       floatingActionButton: FloatingActionButton(
@@ -67,26 +69,41 @@ class _MyHomePageState extends State<MyHomePage> {
                                 listName: liData[index].listname)))
                     .then((value) => _getList());
               },
-              leading: CircleAvatar(
-                radius: 25,
-                child: Text(ledText,
-                    style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold)),
-                backgroundColor: Color(0xFFD5E1F4),
+              leading: Padding(
+                padding: const EdgeInsets.all(0.0),
+                child: CircularPercentIndicator(
+                  backgroundColor: Colors.black12,
+                  radius: 28.0,
+                  lineWidth: 3.0,
+                  percent: liData[index].complated > 0 ? 1* liData[index].complated / liData[index].totalItems : 0,
+                  center: Text(ledText,
+                      style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.blue[400],
+                          fontWeight: FontWeight.bold)),
+                  progressColor: Colors.blue[400],
+                ),
               ),
               title: Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text(liData[index].listname,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: titleText()),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(liData[index].listname,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: titleText()),
+                        Text(
+                          liData[index].lidate
+                           , style: subTitleText())
+                  ],
+                ),
               ),
               subtitle: Text(
                 liData[index].itemsLi,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
+                style:  subTitleText(),
               ),
               trailing: listMenu(liData[index]),
             ),
@@ -178,7 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
       liData.clear();
       allrows.forEach((_li) {
         liData.add(new ListData(
-            _li["id"], _li["listname"], _li["lidate"], 0, 0, "All complete"));
+            _li["id"], _li["listname"], _li["lidate"], 0, 0, "-"));
       });
       // ------  this logic for get nos of total item added and total completed items
       for (var i = 0; i < liData.length; i++) {
@@ -201,7 +218,7 @@ class _MyHomePageState extends State<MyHomePage> {
         });
         var sbstring = liData[i].itemsLi;
         if (itemsIncomplete.length > 0)
-          liData[i].itemsLi = sbstring.substring(0, sbstring.length - 3);
+          liData[i].itemsLi = sbstring.substring(0, sbstring.length - 2);
       }
       emptyCheck = false;
     } else {
@@ -247,8 +264,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       var i = await dbhelper.delete(_li.id);
                       if (i != 0) {
                         Navigator.pop(context);
-                        _getList();
-                        mesToast(_li.listname);
+                        setState(() {
+                          _getList();
+                          mesToast(_li.listname);
+                        });
                       }
                     }),
                 value: "delete",
