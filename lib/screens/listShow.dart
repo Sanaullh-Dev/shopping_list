@@ -21,6 +21,20 @@ class _listShowState extends State<listShow> {
   final dbhelper = Databasehelper.instance;
   List<ShowList> showLi = [], saveList = [];
 
+  final List<popMenu> menus = const <popMenu>[
+    const popMenu(title: 'Sort', icon: Icons.sort, onClick: "sort"),
+    // const popMenu(title: 'Share', icon: Icons.share, onClick: "share"),
+    const popMenu(
+        title: 'Delete all checked',
+        icon: Icons.delete_outline,
+        onClick: "delete-check"),
+    const popMenu(
+        title: 'Uncheck All',
+        icon: Icons.circle_outlined,
+        onClick: "un-check-all"),
+    // const popMenu(title: 'import', icon: Icons.import_export),
+  ];
+
   @override
   void dispose() {
     super.dispose();
@@ -43,9 +57,7 @@ class _listShowState extends State<listShow> {
             child: Icon(Icons.arrow_back, color: Colors.black),
           ),
           title: Text(widget.listName, style: titleText()),
-          actions: [
-            listMenu()
-            ],
+          actions: [listMenu(context)],
           backgroundColor: Colors.blueGrey.shade200,
         ),
         body: showList(),
@@ -148,55 +160,70 @@ class _listShowState extends State<listShow> {
     }
   }
 
-  listMenu() {
-    return PopupMenuButton(
-        // icon: Icon(Icons.more_vert),
-        icon: Icon(Icons.more_vert_outlined, color: Colors.black),
-        onSelected: (_) {},
-        itemBuilder: (_) => <PopupMenuItem<String>>[
-              PopupMenuItem(
-                // ignore: unnecessary_const
-                child: ListTile(
-                    contentPadding: EdgeInsets.all(0),
-                    leading: Icon(Icons.delete),
-                    title: Align(
-                      child: Text("Delete"),
-                      alignment: Alignment(-1.5, 0),
-                    ),
-                    onTap: () async {
-                        Navigator.pop(context);
-                        setState(() {
-                          _getList();
-                          mesToast("Hello");
-                        });
-                      
-                    }),
-                value: "delete",
-              ),
-              PopupMenuItem<String>(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(0),
-                  leading: Icon(Icons.copy),
-                  title: Align(
-                    child: Text("Copy"),
-                    alignment: Alignment(-1.5, 0),
-                  ),
+  listMenu(BuildContext context) {
+    return PopupMenuButton<popMenu>(
+      // onSelected: ,
+      itemBuilder: (BuildContext context) {
+        return menus.map((popMenu menu) {
+          return PopupMenuItem<popMenu>(
+            value: menu,
+            child: GestureDetector(
+              onTap: () {
+                actionPop(menu.onClick).then((val) {
+                  Navigator.pop(context);
+                  setState(() {
+                    
+                  });
+                });
+              },
+              child: Container(
+                width: MediaQuery.of(context).size.width / 2,
+                color: Colors
+                    .white, // this color for when user click on any every than on tab funcation is working
+                child: Row(
+                  children: [
+                    Icon(menu.icon, color: Colors.black45, size: 28),
+                    SizedBox(width: 10.0),
+                    Text(menu.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 1,
+                        )),
+                  ],
                 ),
-                value: "copy",
               ),
-              PopupMenuItem<String>(
-                child: ListTile(
-                  contentPadding: EdgeInsets.all(0),
-                  leading: Icon(Icons.edit),
-                  title: Align(
-                    child: Text("Rename"),
-                    alignment: Alignment(-1.8, 0),
-                  ),
-                ),
-                value: "rename",
-              ),
-            ]);
+            ),
+          );
+        }).toList();
+      },
+    );
   }
 
+  Future<String?> actionPop(String title) async {
+    if (title == "sort") {
+      showLi.sort((a, b) => a.List_Item.compareTo(b.List_Item));
+      return "ok";
+    }
+    // if (title == "share") {}
+    else if (title == "delete-check") {
+      for (var i = 0; i < showLi.length; i++) {
+        if (showLi[i].Item_Status == 1) {
+          var res = await dbhelper.deleteItemChecked(showLi[i]);
+          if(res > 0){
+          showLi.removeAt(i);
+          return "OK";
+          }
+        }
+      }
 
+    } else if (title == "un-check-all") {
+      for (var i = 0; i < showLi.length; i++) {
+        if (showLi[i].Item_Status != 0) {
+          showLi[i].Item_Status = 0;
+        }
+      }
+    }
+    return null;
+  }
 }

@@ -67,3 +67,19 @@ TextStyle ShowTileText(int status) {
       decoration:
           status == 0 ? TextDecoration.none : TextDecoration.lineThrough);
 }
+
+TextStyle NavTitle() {
+  return TextStyle(
+      fontSize: 15.0,
+      fontWeight: FontWeight.bold,
+      letterSpacing: 1
+      );
+}
+
+TextStyle NavSubTitle() {
+  return TextStyle(
+      fontSize: 14.0,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 1
+      );
+}

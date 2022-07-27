@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shopping_list/database/dbhelper.dart';
 import 'package:shopping_list/models/ListModel.dart';
+import 'package:shopping_list/ui_elements/NavDrawer.dart';
 import 'package:shopping_list/ui_elements/Styles.dart';
 import 'package:shopping_list/ui_elements/components.dart';
 
@@ -88,10 +89,12 @@ class _ListAddPageState extends State<ListAddPage> {
         return true;
       },
       child: Scaffold(
+        
         appBar: AppBar(
           backgroundColor: Colors.white,
           leading: GestureDetector(
             onTap: () {
+              _insertItems();
               Navigator.pop(context);
             },
             child: Icon(Icons.arrow_back, color: Colors.black),
@@ -118,6 +121,7 @@ class _ListAddPageState extends State<ListAddPage> {
                 InputDecoration(hintText: "Add Item", border: InputBorder.none),
           ),
         ),
+        drawer: const NaveDrawer(),
         body: Listview(),
         floatingActionButton: FloatingActionButton(
           onPressed: () {

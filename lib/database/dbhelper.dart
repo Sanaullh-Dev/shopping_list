@@ -224,8 +224,8 @@ class Databasehelper {
     return await db!.rawQuery('SELECT * FROM $tableItemsMain;');
   }
 
-  Future<List<Map<String, dynamic>>> getItemsWithStatus(
-      int id, String status) async {
+  Future<List<Map<String, dynamic>>> getItemsWithStatus
+    (int id, String status) async {
     Database? db = await instance.database;
     var st = status == "completed" ? 1 : 0;
     return await db!.rawQuery(
@@ -236,5 +236,10 @@ class Databasehelper {
   Future<int> deleteMainItem(String itemName) async{
     Database? db = await instance.database;
     return await db!.rawDelete('DELETE FROM $tableItemsMain WHERE $colItem = ? ', [itemName]);
+  }
+
+  Future<int> deleteItemChecked(ShowList itemLi) async {
+    Database? db = await instance.database;
+    return await db!.rawDelete('DELETE FROM $tableItems WHERE $columnID = ? AND $colItem = ?',[itemLi.id, itemLi.List_Item]);
   }
 }

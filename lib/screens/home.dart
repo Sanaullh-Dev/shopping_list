@@ -4,6 +4,7 @@ import 'package:shopping_list/database/dbhelper.dart';
 import 'package:shopping_list/models/ListModel.dart';
 import 'package:shopping_list/screens/listAdd.dart';
 import 'package:shopping_list/screens/listShow.dart';
+import 'package:shopping_list/ui_elements/NavDrawer.dart';
 import 'package:shopping_list/ui_elements/Styles.dart';
 import 'package:intl/intl.dart';
 import 'package:shopping_list/ui_elements/components.dart';
@@ -28,12 +29,13 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Icon(Icons.menu, color: Colors.black),
+        // leading: Icon(Icons.menu, color: Colors.black),
         title: Text(widget.title, style: titleText()),
-        backgroundColor: Colors.white,
+        iconTheme: IconThemeData(color: Colors.black),
+        backgroundColor: Colors.blue[400],
         elevation: 0,
-
       ),
+      drawer: NaveDrawer(),
       body: Container(child: getLoad()),
       floatingActionButton: FloatingActionButton(
         tooltip: 'Increment',

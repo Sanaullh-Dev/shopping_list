@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:shopping_list/database/dbhelper.dart';
 
 // List Model
@@ -107,5 +108,15 @@ class ShowList {
       Databasehelper.colItemType : Item_type
     };
   }
+
+  compareTo(ShowList b) {}
   
+}
+
+
+class popMenu {
+  final String title;
+  final IconData icon; 
+  final String onClick;
+  const popMenu({required this.title, required this.icon, required this.onClick});
 }

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(shopping_list LANGUAGES CXX)
 
-set(BINARY_NAME "shopping_list")
+set(BINARY_NAME "List Check")
 
 cmake_policy(SET CMP0063 NEW)
 
