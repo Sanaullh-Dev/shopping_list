@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:shopping_list/screens/home.dart';
+import 'package:shopping_list/screens/SplashScreen.dart';
+import 'package:shopping_list/screens/Home.dart';
 
 void main() {
-  runApp(const MyApp());
+  Map<int, Widget> op = {1: SplashScreen(title: "List Check"), 2: Home(title: "List Check")};
+  
+  runApp(MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  static const String _title = 'List Check';
-
+  static final _title = "List Check" ;
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return  MaterialApp(
       title: _title,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: _title),
-      
-    );
+    home: SplashScreen(title: _title)
+  );
   }
 }

@@ -24,11 +24,11 @@ class _listShowState extends State<listShow> {
   final List<popMenu> menus = const <popMenu>[
     const popMenu(title: 'Sort', icon: Icons.sort, onClick: "sort"),
     // const popMenu(title: 'Share', icon: Icons.share, onClick: "share"),
-    const popMenu(
+    popMenu(
         title: 'Delete all checked',
         icon: Icons.delete_outline,
         onClick: "delete-check"),
-    const popMenu(
+     popMenu(
         title: 'Uncheck All',
         icon: Icons.circle_outlined,
         onClick: "un-check-all"),
@@ -54,7 +54,7 @@ class _listShowState extends State<listShow> {
               await _updateItems();
               Navigator.pop(context);
             },
-            child: Icon(Icons.arrow_back, color: Colors.black),
+            child: const Icon(Icons.arrow_back, color: Colors.black),
           ),
           title: Text(widget.listName, style: titleText()),
           actions: [listMenu(context)],
@@ -162,7 +162,8 @@ class _listShowState extends State<listShow> {
 
   listMenu(BuildContext context) {
     return PopupMenuButton<popMenu>(
-      // onSelected: ,
+      icon: Icon(Icons.more_vert, color: Colors.black,),
+        // onSelected: ,
       itemBuilder: (BuildContext context) {
         return menus.map((popMenu menu) {
           return PopupMenuItem<popMenu>(
@@ -171,9 +172,7 @@ class _listShowState extends State<listShow> {
               onTap: () {
                 actionPop(menu.onClick).then((val) {
                   Navigator.pop(context);
-                  setState(() {
-                    
-                  });
+                  setState(() {});
                 });
               },
               child: Container(
@@ -207,16 +206,15 @@ class _listShowState extends State<listShow> {
     }
     // if (title == "share") {}
     else if (title == "delete-check") {
+      
+      showLi.removeWhere((element) => false);
       for (var i = 0; i < showLi.length; i++) {
         if (showLi[i].Item_Status == 1) {
-          var res = await dbhelper.deleteItemChecked(showLi[i]);
-          if(res > 0){
-          showLi.removeAt(i);
-          return "OK";
-          }
+          await dbhelper.deleteItemChecked(showLi[i]);
         }
       }
-
+      _getList();
+      return "OK";
     } else if (title == "un-check-all") {
       for (var i = 0; i < showLi.length; i++) {
         if (showLi[i].Item_Status != 0) {

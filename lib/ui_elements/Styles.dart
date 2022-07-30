@@ -9,7 +9,7 @@ TextStyle LeadingText() {
 TextStyle titleText() {
   // ignore: prefer_const_constructors
   return TextStyle(
-      fontSize: 19.0, color: Colors.black, fontWeight: FontWeight.bold);
+      fontSize: 22.0, color: Colors.black, fontWeight: FontWeight.w400);
 }
 
 TextStyle subTitleText() {

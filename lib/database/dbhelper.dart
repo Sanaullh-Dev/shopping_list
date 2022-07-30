@@ -107,14 +107,25 @@ class Databasehelper {
     return await db!.insert(table, row);
   }
 
+  // Function for insert List
+  Future<int> updateListName(int id, String liName) async {
+    Database? db = await instance.database;
+    return await db!.rawUpdate("UPDATE $table SET $columnname = ? WHERE $columnID=?", [liName , id]);
+  }
+
   // Funcation for delete
   Future<int> delete(int id) async {
     Database? db = await instance.database;
     var result =
         await db!.rawDelete("DELETE from $table WHERE $columnID = ?", [id]);
-    if (result != 0) {
-      return await db
-          .rawDelete("DELETE from $tableItems WHERE $columnID = ?", [id]);
+    if (result > 0) {
+      var ck = await getAllItems(id);
+      if (ck.isNotEmpty) {
+        return await db
+            .rawDelete("DELETE from $tableItems WHERE $columnID = ?", [id]);
+      } else {
+        return 1;
+      }
     }
     return 0;
   }
@@ -139,7 +150,9 @@ class Databasehelper {
               [row["id"], row["List_Item"]]);
 
           if (ck.length > 0) {
-            batch.delete(tableItems, where: "$columnID=? AND $colItem=?",whereArgs: [row["id"], row["List_Item"]]);
+            batch.delete(tableItems,
+                where: "$columnID=? AND $colItem=?",
+                whereArgs: [row["id"], row["List_Item"]]);
           }
         } else {
           var ck = await db.rawQuery(
@@ -224,8 +237,8 @@ class Databasehelper {
     return await db!.rawQuery('SELECT * FROM $tableItemsMain;');
   }
 
-  Future<List<Map<String, dynamic>>> getItemsWithStatus
-    (int id, String status) async {
+  Future<List<Map<String, dynamic>>> getItemsWithStatus(
+      int id, String status) async {
     Database? db = await instance.database;
     var st = status == "completed" ? 1 : 0;
     return await db!.rawQuery(
@@ -233,13 +246,16 @@ class Databasehelper {
         [id, st]);
   }
 
-  Future<int> deleteMainItem(String itemName) async{
+  Future<int> deleteMainItem(String itemName) async {
     Database? db = await instance.database;
-    return await db!.rawDelete('DELETE FROM $tableItemsMain WHERE $colItem = ? ', [itemName]);
+    return await db!.rawDelete(
+        'DELETE FROM $tableItemsMain WHERE $colItem = ? ', [itemName]);
   }
 
   Future<int> deleteItemChecked(ShowList itemLi) async {
     Database? db = await instance.database;
-    return await db!.rawDelete('DELETE FROM $tableItems WHERE $columnID = ? AND $colItem = ?',[itemLi.id, itemLi.List_Item]);
+    return await db!.rawDelete(
+        'DELETE FROM $tableItems WHERE $columnID = ? AND $colItem = ?',
+        [itemLi.id, itemLi.List_Item]);
   }
 }

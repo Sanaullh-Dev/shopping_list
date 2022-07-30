@@ -1,7 +1,4 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shopping_list/database/dbhelper.dart';
 import 'package:shopping_list/models/ListModel.dart';
@@ -152,6 +149,7 @@ class _ListAddPageState extends State<ListAddPage> {
             child: ListTile(
                 onTap: () {
                   // addItems(mainLi[index]);
+                  addItemController.text = "";
                   setState(() {
                     bool match = false;
                     for (var i = 0; i < mainLi.length; i++) {
